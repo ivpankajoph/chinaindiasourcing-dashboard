@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -19,17 +19,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-      scriptProps={{ async: true }}
-    >
+    <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster richColors position="top-right" />
       </QueryClientProvider>
-    </NextThemesProvider>
+    </ThemeProvider>
   );
 }

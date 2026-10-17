@@ -19,7 +19,7 @@ import { toast } from "sonner";
 
 type MailTemplate = { _id: string; actionName: string; name: string; description: string; subject: string; html: string; text: string; enabled: boolean; variables: string[]; updatedAt?: string };
 type Mode = "preview" | "edit";
-const samples: Record<string, string> = { name: "Aisha Al Mansoori", email: "aisha@example.com", password: "Secure@123", login_url: "https://admin.sellerslogin.com/sign-in", account_type: "Buyer" };
+const samples: Record<string, string> = { name: "Aisha Al Mansoori", email: "aisha@example.com", company: "Aisha Trading LLC", form_type: "Buyer", password: "Secure@123", login_url: "https://admin.sellerslogin.com/sign-in", account_type: "Buyer" };
 const renderSample = (value: string) => value.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_match, key) => samples[key] || `{{${key}}}`);
 
 export default function TemplatesPage() {
@@ -39,6 +39,8 @@ export default function TemplatesPage() {
     placeholderData: keepPreviousData,
   });
   const templates: MailTemplate[] = data?.items || [];
+  const buyerActionTemplate = templates.find((template) => template.actionName === "buyer_create_form");
+  const sellerActionTemplate = templates.find((template) => template.actionName === "seller_create_form");
   const pagination = data?.pagination || { page: 1, pages: 1, total: 0 };
 
   const openTemplate = (template: MailTemplate, nextMode: Mode) => { setSelected(template); setDraft({ ...template }); setMode(nextMode); };

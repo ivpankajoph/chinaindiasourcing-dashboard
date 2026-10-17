@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const SESSION_COOKIE = "cis_admin_session";
-const protectedPrefixes = ["/dashboard", "/buyers", "/sellers", "/mailers", "/emails", "/explore-buyers", "/explore-sellers", "/purchased-leads"];
+const protectedPrefixes = ["/dashboard", "/notifications", "/buyers", "/sellers", "/mailers", "/emails", "/explore-buyers", "/explore-sellers", "/purchased-leads"];
 
 async function authenticatedUser(token: string) {
   const base = (process.env.BACKEND_URL || "http://localhost:8081").replace(/\/$/, "");
@@ -46,5 +46,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login/:path*", "/dashboard/:path*", "/buyers/:path*", "/sellers/:path*", "/mailers/:path*", "/emails/:path*", "/explore-buyers/:path*", "/explore-sellers/:path*", "/purchased-leads/:path*"],
+  matcher: ["/login/:path*", "/dashboard/:path*", "/notifications/:path*", "/buyers/:path*", "/sellers/:path*", "/mailers/:path*", "/emails/:path*", "/explore-buyers/:path*", "/explore-sellers/:path*", "/purchased-leads/:path*"],
 };

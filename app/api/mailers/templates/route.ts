@@ -6,3 +6,13 @@ export async function GET(request: NextRequest) {
   if (!response) return NextResponse.json({ success: false }, { status: 401 });
   return NextResponse.json(await response.json(), { status: response.status });
 }
+
+export async function POST(request: Request) {
+  const response = await authorizedBackendFetch("/mailers/templates", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(await request.json()),
+  });
+  if (!response) return NextResponse.json({ success: false }, { status: 401 });
+  return NextResponse.json(await response.json(), { status: response.status });
+}
