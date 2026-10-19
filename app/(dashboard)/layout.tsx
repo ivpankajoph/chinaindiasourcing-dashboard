@@ -501,7 +501,7 @@ export default function DashboardLayout({
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/buyers" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
                     >
                       <Users className="size-3.5" />
-                      For Buyers
+                      Send to Buyers
                     </Link>
                     <Link
                       href="/automation/sellers"
@@ -509,7 +509,7 @@ export default function DashboardLayout({
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/sellers" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
                     >
                       <Store className="size-3.5" />
-                      For Sellers
+                      Send to Sellers
                     </Link>
                     <Link
                       href="/automation/everyone"
@@ -517,7 +517,7 @@ export default function DashboardLayout({
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/everyone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
                     >
                       <Mail className="size-3.5" />
-                      For Everyone
+                      Send to Any Email
                     </Link>
                   </nav>
                 )}

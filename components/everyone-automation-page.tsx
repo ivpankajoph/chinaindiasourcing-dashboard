@@ -117,7 +117,7 @@ export default function EveryoneAutomationPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold">Automation for Everyone</h1>
+        <h1 className="text-2xl font-bold">Send Automations to Any Email</h1>
         <p className="text-muted-foreground">
           Send any mailer template to any email address.
         </p>

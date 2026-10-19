@@ -148,7 +148,7 @@ export default function AutomationPage({ audience }: Props) {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold">
-          Automations for {audience === "buyers" ? "Buyers" : "Sellers"}
+          Send Automations to {audience === "buyers" ? "Buyers" : "Sellers"}
         </h1>
         <p className="text-muted-foreground">
           Promo templates send their saved {audience === "buyers" ? "seller" : "buyer"} leads to the {audience} you select below.

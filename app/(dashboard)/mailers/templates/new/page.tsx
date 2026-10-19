@@ -161,8 +161,8 @@ export default function NewTemplatePage() {
               {form.type === "promo_temp" && <div className="space-y-1.5">
                 <Label htmlFor="promo-audience">Promo for</Label>
                 <select id="promo-audience" value={form.promoAudience} onChange={(event) => { update("promoAudience", event.target.value); setSelectedLeads([]); }} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
-                  <option value="buyers">For Buyers - add seller leads</option>
-                  <option value="sellers">For Sellers - add buyer leads</option>
+                  <option value="buyers">Send to Buyers - add seller leads</option>
+                  <option value="sellers">Send to Sellers - add buyer leads</option>
                 </select>
               </div>}
               <div className="space-y-1.5">
