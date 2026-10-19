@@ -10,12 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { PromoLeadPicker, type PromoLead } from "@/components/mailers/promo-lead-picker";
+import { renderPromoLeadCards } from "@/components/mailers/promo-lead-preview";
+import { VisualHtmlEditor } from "@/components/mailers/visual-html-editor";
 
 const starterHtml =
   "<h1>Welcome, {{name}}</h1><p>Thank you for using China India Sourcing.</p><p>Your message goes here.</p>";
 const previewLogoUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMSIgeT0iMSIgd2lkdGg9IjQ2IiBoZWlnaHQ9IjQ2IiByeD0iMTMiIGZpbGw9IiNmMGY5ZmYiIHN0cm9rZT0iI2JmZGJmZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTkuNSAxOC41QzEzLjUgOS41IDI3IDcuNSAzNyAxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjU2M2ViIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS13aWR0aD0iNCIvPjxwYXRoIGQ9Ik0zOC41IDI5LjVDMzQuNSAzOC41IDIxIDQwLjUgMTEgMzQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBlYTVlOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJtMzAuNSAxMS41IDYuNyAyLjMtMi4zIDYuN00xNy41IDM2LjVsLTYuNy0yLjMgMi4zLTYuNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWU0MGFmIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMi43Ii8+PGNpcmNsZSBjeD0iMTEiIGN5PSIxOCIgcj0iMyIgZmlsbD0iI2Y1OWEwYiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjEuNSIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iMzAiIHI9IjMiIGZpbGw9IiMyMmM1NWUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiLz48L3N2Zz4=";
-const previewHtml = (html: string, subject: string) => {
-  const content = html
+const previewHtml = (html: string, subject: string, leads: PromoLead[]) => {
+  const leadHtml = renderPromoLeadCards(leads);
+  const content = (html.includes("{{leads_html}}") ? html.replaceAll("{{leads_html}}", leadHtml) : `${html}${leadHtml}`)
     .replace(/{{\s*name\s*}}/gi, "Aisha Al Mansoori")
     .replace(/{{\s*email\s*}}/gi, "aisha@example.com");
   return `<!doctype html><html><body style="margin:0;background:#f4f7fb;padding:24px 12px;font-family:Arial,sans-serif;color:#172033"><div style="max-width:640px;margin:auto;background:white;border:1px solid #dce5f2;border-radius:16px;overflow:hidden"><div style="background:#2563eb;padding:20px 24px;color:white"><img src="${previewLogoUrl}" alt="China India Sourcing" width="42" height="42" style="display:block;margin-bottom:10px"><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85">China India Sourcing</div></div><div style="padding:24px"><div style="font-size:12px;color:#64748b;margin-bottom:18px">Subject: ${subject.replace(/</g, "&lt;")}</div>${content}</div><div style="border-top:1px solid #e2e8f0;padding:18px 24px;color:#64748b;font-size:13px;line-height:1.6">Regards,<br><strong style="color:#172033">China India Sourcing Team</strong><br>Import &amp; Export Network</div></div></body></html>`;
@@ -25,11 +29,14 @@ export default function NewTemplatePage() {
     actionName: "",
     name: "",
     description: "",
+    type: "standard",
+    promoAudience: "sellers",
     subject: "",
     html: starterHtml,
     text: "Welcome, {{name}}\n\nThank you for using China India Sourcing.\n\nYour message goes here.",
     variables: "name",
   });
+  const [selectedLeads, setSelectedLeads] = React.useState<PromoLead[]>([]);
   const [mode, setMode] = React.useState<"visual" | "code">("visual");
   const [viewMode, setViewMode] = React.useState<"create" | "preview">(
     "create",
@@ -38,11 +45,14 @@ export default function NewTemplatePage() {
     setForm((current) => ({ ...current, [key]: value }));
   const create = useMutation({
     mutationFn: async () => {
+      if (form.type === "promo_temp" && !selectedLeads.length) throw new Error(`Select at least one ${form.promoAudience === "buyers" ? "seller" : "buyer"} lead for this promo template`);
       const response = await fetch("/api/mailers/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          buyerIds: form.type === "promo_temp" && form.promoAudience === "sellers" ? selectedLeads.map((lead) => lead._id) : [],
+          sellerIds: form.type === "promo_temp" && form.promoAudience === "buyers" ? selectedLeads.map((lead) => lead._id) : [],
           variables: form.variables
             .split(",")
             .map((item) => item.trim())
@@ -142,6 +152,20 @@ export default function NewTemplatePage() {
                 </div>
               </div>
               <div className="space-y-1.5">
+                <Label htmlFor="template-type">Template type</Label>
+                <select id="template-type" value={form.type} onChange={(event) => update("type", event.target.value)} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+                  <option value="standard">Standard</option>
+                  <option value="promo_temp">promo_temp - lead promotion</option>
+                </select>
+              </div>
+              {form.type === "promo_temp" && <div className="space-y-1.5">
+                <Label htmlFor="promo-audience">Promo for</Label>
+                <select id="promo-audience" value={form.promoAudience} onChange={(event) => { update("promoAudience", event.target.value); setSelectedLeads([]); }} className="h-10 w-full rounded-md border bg-background px-3 text-sm">
+                  <option value="buyers">For Buyers - add seller leads</option>
+                  <option value="sellers">For Sellers - add buyer leads</option>
+                </select>
+              </div>}
+              <div className="space-y-1.5">
                 <Label>Description</Label>
                 <Input
                   value={form.description}
@@ -171,6 +195,7 @@ export default function NewTemplatePage() {
                   Use placeholders like {`{{name}}`} in subject and content.
                 </p>
               </div>
+              {form.type === "promo_temp" && <PromoLeadPicker kind={form.promoAudience === "buyers" ? "sellers" : "buyers"} selected={selectedLeads} onChange={setSelectedLeads} />}
               <Tabs
                 value={mode}
                 onValueChange={(value) => setMode(value as "visual" | "code")}
@@ -186,13 +211,9 @@ export default function NewTemplatePage() {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="visual" className="mt-3">
-                  <div
-                    contentEditable
-                    suppressContentEditableWarning
-                    dangerouslySetInnerHTML={{ __html: form.html }}
-                    onInput={(event) =>
-                      update("html", event.currentTarget.innerHTML)
-                    }
+                  <VisualHtmlEditor
+                    html={form.html}
+                    onChange={(html) => update("html", html)}
                     className="min-h-[360px] rounded-lg border bg-white p-8 text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   />
                   <p className="mt-2 text-xs text-muted-foreground">
@@ -249,6 +270,7 @@ export default function NewTemplatePage() {
                   srcDoc={previewHtml(
                     form.html,
                     form.subject || "Your email subject",
+                    form.type === "promo_temp" ? selectedLeads : [],
                   )}
                   className="h-[680px] w-full bg-white"
                 />

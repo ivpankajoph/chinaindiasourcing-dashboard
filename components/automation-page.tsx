@@ -23,6 +23,7 @@ export default function AutomationPage({ audience }: Props) {
   const [tab, setTab] = React.useState<"create" | "scheduled">("create");
   const [selected, setSelected] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState("");
+  const deferredSearch = React.useDeferredValue(search.trim());
   const [leadPage, setLeadPage] = React.useState(1);
   const [name, setName] = React.useState("");
   const [template, setTemplate] = React.useState("");
@@ -50,11 +51,11 @@ export default function AutomationPage({ audience }: Props) {
   });
   const automations: any[] = automationsQuery.data || [];
   const leadsQuery = useQuery({
-    queryKey: ["automation-leads", recipient, leadPage],
+    queryKey: ["automation-leads", recipient, leadPage, deferredSearch],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/${recipient}?limit=25&page=${leadPage}`,
-      );
+      const params = new URLSearchParams({ limit: "25", page: String(leadPage) });
+      if (deferredSearch) params.set("search", deferredSearch);
+      const response = await fetch(`/api/${recipient}?${params}`);
       const body = await response.json();
       if (!response.ok)
         throw new Error(body.error?.message || "Unable to load leads");
@@ -74,15 +75,10 @@ export default function AutomationPage({ audience }: Props) {
   const leadPagination = leadsQuery.data?.pagination || {};
   const templates = (templatesQuery.data || []).filter((x: any) => x.enabled);
   const id = (x: any) => String(x._id || x.id);
-  const filtered = leads.filter((x: any) =>
-    `${x.companyName || x.company || ""} ${x.fullName || x.contactName || x.name || ""} ${x.email || ""} ${x.city || ""} ${x.country || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
   const toggle = (v: string) =>
     setSelected((a) => (a.includes(v) ? a.filter((x) => x !== v) : [...a, v]));
   const selectAll = () => {
-    const ids = filtered.map(id);
+    const ids = leads.map(id);
     setSelected((a) =>
       ids.every((x: string) => a.includes(x))
         ? a.filter((x) => !ids.includes(x))
@@ -234,12 +230,15 @@ export default function AutomationPage({ audience }: Props) {
               <div className="mb-3 flex gap-2">
                 <Input
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setLeadPage(1);
+                  }}
                   placeholder="Search company, person, email or location"
                 />
-                <Button type="button" variant="outline" onClick={selectAll}>
-                  {filtered.length &&
-                  filtered.every((x: any) =>
+                <Button type="button" variant="outline" onClick={selectAll} disabled={!leads.length || leadsQuery.isFetching}>
+                  {leads.length &&
+                  leads.every((x: any) =>
                     selected.includes(id(x)) ? true : false,
                   )
                     ? "Clear all"
@@ -261,7 +260,7 @@ export default function AutomationPage({ audience }: Props) {
                         </div>
                       </div>
                     ))
-                  : filtered.map((x: any) => (
+                  : leads.map((x: any) => (
                       <label
                         key={id(x)}
                         className="flex gap-3 rounded-lg border p-3"
@@ -304,6 +303,16 @@ export default function AutomationPage({ audience }: Props) {
                         </span>
                       </label>
                     ))}
+                {!leadsQuery.isLoading && !leadsQuery.isError && !leads.length && (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    No {recipient} match your search.
+                  </p>
+                )}
+                {leadsQuery.isError && (
+                  <p className="py-10 text-center text-sm text-destructive">
+                    Unable to load leads. Please try again.
+                  </p>
+                )}
               </div>
               {leadsQuery.isFetching && !leadsQuery.isLoading && (
                 <div className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground">

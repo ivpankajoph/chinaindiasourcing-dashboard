@@ -93,6 +93,7 @@ export default function DashboardLayout({
   );
   const [automationOpen, setAutomationOpen] = React.useState(true);
   const [websiteComingSoon, setWebsiteComingSoon] = React.useState(false);
+  const [automationComingSoon, setAutomationComingSoon] = React.useState(false);
   const [planOpen, setPlanOpen] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(256);
   const [resizingSidebar, setResizingSidebar] = React.useState(false);
@@ -346,7 +347,10 @@ export default function DashboardLayout({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => {
+                    setAutomationComingSoon(true);
+                    setSidebarOpen(false);
+                  }}
                   className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                 >
                   <span className="flex items-center gap-2.5">
@@ -357,32 +361,6 @@ export default function DashboardLayout({
                     New
                   </span>
                 </button>
-                <nav className="mt-1 ml-5 space-y-0.5 border-l pl-2">
-                  <Link
-                    href="/automation/buyers"
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/buyers" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
-                  >
-                    <Users className="size-3.5" />
-                    For Buyers
-                  </Link>
-                  <Link
-                    href="/automation/sellers"
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/sellers" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
-                  >
-                    <Store className="size-3.5" />
-                    For Sellers
-                  </Link>
-                  <Link
-                    href="/automation/everyone"
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/automation/everyone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}
-                  >
-                    <Mail className="size-3.5" />
-                    For Everyone
-                  </Link>
-                </nav>
                 <Link
                   href="/billing"
                   onClick={() => setSidebarOpen(false)}
@@ -429,6 +407,11 @@ export default function DashboardLayout({
                       title: "Email Accounts",
                       href: "/mailers/email-accounts",
                       icon: AtSign,
+                    },
+                    {
+                      title: "Buyer leads to sellers",
+                      href: "/mailers/lead-campaigns",
+                      icon: Send,
                     },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -652,7 +635,25 @@ export default function DashboardLayout({
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
+          {(user.roleKey === "buyer" || user.roleKey === "seller") &&
+          pathname.startsWith("/automation") ? (
+            <div className="flex min-h-[60vh] items-center justify-center">
+              <div className="max-w-md text-center">
+                <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50">
+                  <Zap className="size-7" />
+                </div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Email Automations coming soon
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We are preparing email automation tools for buyer and seller
+                  accounts. They will be available here soon.
+                </p>
+              </div>
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
       <Dialog open={websiteComingSoon} onOpenChange={setWebsiteComingSoon}>
@@ -671,6 +672,28 @@ export default function DashboardLayout({
             <Button
               className="bg-blue-600 text-white hover:bg-blue-500"
               onClick={() => setWebsiteComingSoon(false)}
+            >
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={automationComingSoon} onOpenChange={setAutomationComingSoon}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50">
+              <Zap className="size-6" />
+            </div>
+            <DialogTitle>Email Automations coming soon</DialogTitle>
+            <DialogDescription>
+              Email automation tools are being prepared for buyer and seller
+              accounts. They will be available here soon.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-500"
+              onClick={() => setAutomationComingSoon(false)}
             >
               Got it
             </Button>
