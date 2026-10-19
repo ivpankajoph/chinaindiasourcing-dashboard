@@ -49,7 +49,7 @@ export default function EveryoneAutomationPage() {
     fetch("/api/mailers/templates?limit=100")
       .then((r) => r.json())
       .then((b) =>
-        setTemplates((b.data?.items || []).filter((x: any) => x.enabled)),
+        setTemplates((b.data?.items || []).filter((x: any) => x.enabled && x.type !== "promo_temp")),
       );
   }, []);
   const create = () => {

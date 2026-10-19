@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { AutomationScheduleFields } from "@/components/automation-schedule-fields";
 type Props = { audience: "buyers" | "sellers" };
 export default function AutomationPage({ audience }: Props) {
-  const recipient = audience === "buyers" ? "sellers" : "buyers";
+  const oppositeLeadKind = audience === "buyers" ? "sellers" : "buyers";
   const [tab, setTab] = React.useState<"create" | "scheduled">("create");
   const [selected, setSelected] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState("");
@@ -50,12 +50,24 @@ export default function AutomationPage({ audience }: Props) {
     },
   });
   const automations: any[] = automationsQuery.data || [];
+  const templatesQuery = useQuery({
+    queryKey: ["automation-templates"],
+    queryFn: async () =>
+      (await (await fetch("/api/mailers/templates?limit=100")).json()).data
+        ?.items || [],
+  });
+  const templates = (templatesQuery.data || []).filter(
+    (item: any) => item.enabled && (item.type !== "promo_temp" || item.promoAudience === audience),
+  );
+  const selectedTemplate = templates.find((item: any) => item.actionName === template);
+  const promoMode = selectedTemplate?.type === "promo_temp";
+  const pickerKind = promoMode ? audience : oppositeLeadKind;
   const leadsQuery = useQuery({
-    queryKey: ["automation-leads", recipient, leadPage, deferredSearch],
+    queryKey: ["automation-leads", pickerKind, leadPage, deferredSearch],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: "25", page: String(leadPage) });
       if (deferredSearch) params.set("search", deferredSearch);
-      const response = await fetch(`/api/${recipient}?${params}`);
+      const response = await fetch(`/api/${pickerKind}?${params}`);
       const body = await response.json();
       if (!response.ok)
         throw new Error(body.error?.message || "Unable to load leads");
@@ -65,15 +77,8 @@ export default function AutomationPage({ audience }: Props) {
       };
     },
   });
-  const templatesQuery = useQuery({
-    queryKey: ["automation-templates"],
-    queryFn: async () =>
-      (await (await fetch("/api/mailers/templates?limit=100")).json()).data
-        ?.items || [],
-  });
   const leads = leadsQuery.data?.items || [];
   const leadPagination = leadsQuery.data?.pagination || {};
-  const templates = (templatesQuery.data || []).filter((x: any) => x.enabled);
   const id = (x: any) => String(x._id || x.id);
   const toggle = (v: string) =>
     setSelected((a) => (a.includes(v) ? a.filter((x) => x !== v) : [...a, v]));
@@ -106,7 +111,8 @@ export default function AutomationPage({ audience }: Props) {
           frequency: interval,
           schedule,
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          leadIds: selected,
+          leadIds: promoMode ? [] : selected,
+          recipientIds: promoMode ? selected : [],
         }),
       });
       const body = await response.json();
@@ -145,7 +151,7 @@ export default function AutomationPage({ audience }: Props) {
           Automations for {audience === "buyers" ? "Buyers" : "Sellers"}
         </h1>
         <p className="text-muted-foreground">
-          Send {recipient} lead data using your mailer templates.
+          Promo templates send their saved {audience === "buyers" ? "seller" : "buyer"} leads to the {audience} you select below.
         </p>
       </div>
       <div className="flex w-full max-w-xl rounded-xl bg-muted p-1">
@@ -185,7 +191,12 @@ export default function AutomationPage({ audience }: Props) {
               <Label>Email template</Label>
               <Select
                 value={template}
-                onValueChange={(v) => setTemplate(v || "")}
+                onValueChange={(v) => {
+                  setTemplate(v || "");
+                  setSelected([]);
+                  setSearch("");
+                  setLeadPage(1);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a template" />
@@ -198,6 +209,16 @@ export default function AutomationPage({ audience }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              {promoMode && (
+                <p className="text-xs text-muted-foreground">
+                  Email will contain the {audience === "sellers" ? "buyer" : "seller"} leads saved in this template ({audience === "sellers" ? selectedTemplate.buyerIds?.length || 0 : selectedTemplate.sellerIds?.length || 0}). Select recipients on the right.
+                </p>
+              )}
+              {selectedTemplate && !promoMode && (
+                <p className="text-xs text-muted-foreground">
+                  Standard automations send the selected lead data to all eligible {audience}.
+                </p>
+              )}
               <Label>Start date and time</Label>
               <Input
                 type="datetime-local"
@@ -223,10 +244,11 @@ export default function AutomationPage({ audience }: Props) {
             <CardHeader>
               <CardTitle className="flex gap-2">
                 <Users className="size-5 text-blue-600" />
-                Select {recipient} leads
+                {promoMode ? `Select ${audience} to receive this email` : `Select ${oppositeLeadKind} leads`}
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {promoMode && <p className="mb-3 text-sm text-muted-foreground">These accounts receive the email. The lead cards come from the selected promo template.</p>}
               <div className="mb-3 flex gap-2">
                 <Input
                   value={search}
@@ -305,7 +327,7 @@ export default function AutomationPage({ audience }: Props) {
                     ))}
                 {!leadsQuery.isLoading && !leadsQuery.isError && !leads.length && (
                   <p className="py-10 text-center text-sm text-muted-foreground">
-                    No {recipient} match your search.
+                    No {pickerKind} match your search.
                   </p>
                 )}
                 {leadsQuery.isError && (
@@ -374,7 +396,7 @@ export default function AutomationPage({ audience }: Props) {
                     <p className="font-semibold">{x.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {x.templateAction} · {x.frequency} ·{" "}
-                      {x.leadIds?.length || 0} lead(s) ·{" "}
+                      {x.recipientIds?.length ? `${x.recipientIds.length} recipient(s)` : `${x.leadIds?.length || 0} lead(s)`} ·{" "}
                       {x.nextRunAt
                         ? `Next: ${new Date(x.nextRunAt).toLocaleString()}`
                         : x.status}
